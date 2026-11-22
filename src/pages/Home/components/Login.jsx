@@ -7,47 +7,65 @@ export default function Login() {
   const { login } = useApp();
   const navigate = useNavigate();
   const location = useLocation();
-  const [form, setForm] = useState({ email: "", password: "" });
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
-  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+  // location.state = the hidden note we sent with navigate(...)
+  let from = null;
+  let justRegistered = false;
+  if (location.state !== null) {
+    if (location.state.from) from = location.state.from;
+    if (location.state.registered) justRegistered = true;
+  }
 
-  const handleSubmit = (e) => {
+  function handleSubmit(e) {
     e.preventDefault();
-    const res = login(form.email, form.password);
-    if (!res.ok) {
-      setError(res.error);
+
+    const result = login(email, password);
+    if (result.ok === false) {
+      setError(result.error);
       return;
     }
-    const from = location.state?.from;
-    navigate(from || (res.role === "instructor" ? "/instructor" : "/dashboard"), { replace: true });
-  };
+
+    // go back to the page the visitor wanted, else to the right dashboard
+    let goTo;
+    if (from !== null) {
+      goTo = from;
+    } else if (result.role === "instructor") {
+      goTo = "/instructor";
+    } else {
+      goTo = "/dashboard";
+    }
+    navigate(goTo, { replace: true });
+  }
 
   const input = "mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:border-blue-500";
 
   return (
     <div className="flex min-h-screen items-center justify-center p-4">
-      <form onSubmit={handleSubmit} className="w-full max-w-md space-y-4 rounded-xl shadow shadow-yellow-500 bg-white p-6 shadow-sm">
+      <form onSubmit={handleSubmit} className="w-full max-w-md space-y-4 rounded-xl border bg-white p-6 shadow-sm">
         <h1 className="flex items-center gap-2 text-2xl font-bold text-blue-600">
           <FcGraduationCap className="text-4xl" /> LearnPro
         </h1>
         <h2 className="text-lg font-semibold">Log in</h2>
 
-        {location.state?.registered && (
+        {justRegistered && (
           <p className="rounded-lg bg-green-100 p-2 text-sm text-green-700">Account created. Log in to start.</p>
         )}
-        {error && <p className="rounded-lg bg-red-100 p-2 text-sm text-red-700">{error}</p>}
+        {error !== "" && <p className="rounded-lg bg-red-100 p-2 text-sm text-red-700">{error}</p>}
 
         <label className="block text-sm font-medium">
           Email
-          <input name="email" type="email" value={form.email} onChange={handleChange} required className={input} />
+          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className={input} />
         </label>
         <label className="block text-sm font-medium">
           Password
-          <input name="password" type="password" value={form.password} onChange={handleChange} required className={input} />
+          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required className={input} />
         </label>
 
-        <button className="w-full rounded-lg bg-yellow-600 py-2 font-semibold text-white hover:bg-yellow-700">Log in</button>
+        <button className="w-full rounded-lg bg-blue-600 py-2 font-semibold text-white hover:bg-blue-700">Log in</button>
 
         <p className="text-center text-sm text-gray-500">
           No account yet? <Link to="/register" className="text-blue-600">Create one</Link>
