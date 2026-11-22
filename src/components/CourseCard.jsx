@@ -19,7 +19,6 @@ export default function CourseCard({ course }) {
     }
   }
 
-  // instructors don't save courses, so no heart for them
   let showHeart = true;
   if (user !== null && user.role === "instructor") {
     showHeart = false;

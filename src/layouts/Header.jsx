@@ -4,14 +4,41 @@ import { FiSearch, FiMenu } from "react-icons/fi";
 import { useApp } from "../utils/Mycontext";
 
 export default function Header({ onMenuClick }) {
-  const [search, setSearch] = useState("")
-  const { user } = useApp()
-  const navigate = useNavigate()
+  const [search, setSearch] = useState("");
+  const { user } = useApp();
+  const navigate = useNavigate();
 
-  const handleSearch = (e) => {
+  function handleSearch(e) {
     e.preventDefault();
-    navigate(`/courses?q=${encodeURIComponent(search.trim())}`);
-  };
+    const text = search.trim();
+    navigate("/courses?q=" + encodeURIComponent(text));
+  }
+
+  let firstName = "Guest";
+  if (user !== null) {
+    firstName = user.name.split(" ")[0];
+  }
+
+  let userArea;
+  if (user !== null) {
+    userArea = (
+      <>
+        <div className="hidden text-right text-sm sm:block">
+          <p className="font-semibold">{user.name}</p>
+          <p className="text-xs text-gray-500 capitalize">{user.role}</p>
+        </div>
+        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-yellow-600 font-bold text-gray-500">
+          {user.name.charAt(0).toUpperCase()}
+        </div>
+      </>
+    );
+  } else {
+    userArea = (
+      <Link to="/login" className="rounded-xl bg-yellow-600 px-4 py-2 text-sm font-semibold text-white hover:bg-yellow-500 hover:text-gray-500">
+        Log in
+      </Link>
+    );
+  }
 
   return (
     <header className="flex items-center justify-between gap-3 border-b border-blue-300 bg-white p-4">
@@ -20,7 +47,7 @@ export default function Header({ onMenuClick }) {
       </button>
 
       <h1 className="hidden text-xl  lg:block">
-        Welcome back, {user ? user.name.split(" ")[0] : "Guest"}
+        Welcome back, {firstName}
       </h1>
 
       <form onSubmit={handleSearch} className="relative flex-1 md:max-w-sm">
@@ -35,23 +62,7 @@ export default function Header({ onMenuClick }) {
         />
       </form>
 
-      <div className="flex items-center gap-3">
-        {user ? (
-          <>
-            <div className="hidden text-right text-sm sm:block">
-              <p className="font-semibold">{user.name}</p>
-              <p className="text-xs text-gray-500 capitalize">{user.role}</p>
-            </div>
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-yellow-600 font-bold text-gray-500">
-              {user.name[0].toUpperCase()}
-            </div>
-          </>
-        ) : (
-          <Link to="/login" className="rounded-xl bg-yellow-600 px-4 py-2 text-sm font-semibold text-white hover:bg-yellow-500 hover:text-gray-500">
-            Log in
-          </Link>
-        )}
-      </div>
+      <div className="flex items-center gap-3">{userArea}</div>
     </header>
   );
 }
