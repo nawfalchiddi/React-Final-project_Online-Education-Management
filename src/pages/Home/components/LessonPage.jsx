@@ -9,26 +9,49 @@ export default function LessonPage() {
   const navigate = useNavigate();
   const { courses, user, isEnrolled, enroll, getEnrollment, toggleLesson, setLastLesson, getProgress } = useApp();
 
-  const course = courses.find((c) => c.id === id);
-  const index = course ? course.lessons.findIndex((l) => l.id === lessonId) : -1;
-  const lesson = course?.lessons[index];
+  // find the course and the lesson
+  let course = null;
+  for (let i = 0; i < courses.length; i++) {
+    if (courses[i].id === id) {
+      course = courses[i];
+    }
+  }
+
+  let index = -1;
+  let lesson = null;
+  if (course !== null) {
+    for (let i = 0; i < course.lessons.length; i++) {
+      if (course.lessons[i].id === lessonId) {
+        index = i;
+        lesson = course.lessons[i];
+      }
+    }
+  }
+
   const enrolled = isEnrolled(id);
-  const isOwner = user && course && user.email === course.ownerEmail;
-  const canView = !!lesson && (enrolled || lesson.free || isOwner);
 
+  let isOwner = false;
+  if (user !== null && course !== null && user.email === course.ownerEmail) {
+    isOwner = true;
+  }
+
+  // can the user see this lesson?
+  let canView = false;
+  if (lesson !== null) {
+    if (enrolled || lesson.free || isOwner) {
+      canView = true;
+    }
+  }
+
+  // remember the last opened lesson ("continue where you left off")
   useEffect(() => {
-    if (enrolled && lesson) setLastLesson(id, lessonId)
+    if (enrolled && lesson !== null) {
+      setLastLesson(id, lessonId);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enrolled, id, lessonId]);
 
-
-
-
-    // eslint-disable-next-line 
-    // react-hooks/exhaustive-deps
-
-
-  }, [enrolled, id, lessonId])
-
-  if (!course || !lesson) {
+  if (course === null || lesson === null) {
     return (
       <div className="py-20 text-center">
         <p>Lesson not found.</p>
@@ -37,19 +60,105 @@ export default function LessonPage() {
     );
   }
 
-  const prev = course.lessons[index - 1];
-  const next = course.lessons[index + 1];
-  const isDone = getEnrollment(id)?.completed.includes(lessonId);
-  const { percent } = getProgress(course);
+  // previous and next lessons
+  let prev = null;
+  if (index > 0) {
+    prev = course.lessons[index - 1];
+  }
+  let next = null;
+  if (index < course.lessons.length - 1) {
+    next = course.lessons[index + 1];
+  }
 
-  const handleEnroll = () => {
-    if (!user) navigate("/login", { state: { from: `/courses/${id}/lessons/${lessonId}` } });
-    else enroll(id);
-  };
+  let isDone = false;
+  const enrollment = getEnrollment(id);
+  if (enrollment !== null) {
+    isDone = enrollment.completed.includes(lessonId);
+  }
+
+  const progress = getProgress(course);
+
+  // can this person enroll? (visitors and students)
+  let canEnroll = false;
+  if (user === null || user.role === "student") {
+    canEnroll = true;
+  }
+
+  function handleEnroll() {
+    if (user === null) {
+      navigate("/login", { state: { from: "/courses/" + id + "/lessons/" + lessonId } });
+    } else {
+      enroll(id);
+    }
+  }
+
+  // button "Mark as completed"
+  let doneClass = "flex items-center gap-2 rounded-lg px-4 py-2 font-semibold bg-blue-600 text-white";
+  let doneText = "Mark as completed";
+  if (isDone) {
+    doneClass = "flex items-center gap-2 rounded-lg px-4 py-2 font-semibold bg-green-100 text-green-700";
+    doneText = "Completed (click to undo)";
+  }
+
+  // the middle part: locked box, or the lesson
+  let middle;
+  if (!canView) {
+    middle = (
+      <div className="rounded-xl border bg-white p-8 text-center">
+        <FiLock className="mx-auto mb-3 text-3xl text-gray-400" />
+        <p className="mb-4">This lesson is locked. enroll in the course to unlock it.</p>
+        {canEnroll && (
+          <button onClick={handleEnroll} className="rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white">
+            Enroll in this course
+          </button>
+        )}
+      </div>
+    );
+  } else {
+    middle = (
+      <>
+        {lesson.videoUrl && (
+          <div className="aspect-video overflow-hidden rounded-xl bg-black">
+            <iframe src={lesson.videoUrl} title={lesson.title} className="h-full w-full" allowFullScreen />
+          </div>
+        )}
+        <div className="whitespace-pre-line rounded-xl border bg-white p-5 text-gray-700">{lesson.content}</div>
+
+        {enrolled && (
+          <button onClick={() => toggleLesson(id, lessonId)} className={doneClass}>
+            <FiCheck /> {doneText}
+          </button>
+        )}
+        {!enrolled && lesson.free && canEnroll && (
+          <p className="text-sm text-gray-500">
+            This is a free preview. <button onClick={handleEnroll} className="text-blue-600 underline">Enroll</button> to unlock all lessons and save your progress.
+          </p>
+        )}
+      </>
+    );
+  }
+
+  // previous / next buttons
+  let prevButton = <span />;
+  if (prev !== null) {
+    prevButton = (
+      <Link to={"/courses/" + id + "/lessons/" + prev.id} className="flex items-center gap-2 rounded-lg border px-4 py-2 text-sm">
+        <FiArrowLeft /> Previous
+      </Link>
+    );
+  }
+  let nextButton = <span />;
+  if (next !== null) {
+    nextButton = (
+      <Link to={"/courses/" + id + "/lessons/" + next.id} className="flex items-center gap-2 rounded-lg border px-4 py-2 text-sm">
+        Next <FiArrowRight />
+      </Link>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-3xl space-y-5">
-      <Link to={`/courses/${id}`} className="flex items-center gap-1 text-sm text-blue-600">
+      <Link to={"/courses/" + id} className="flex items-center gap-1 text-sm text-blue-600">
         <FiArrowLeft /> {course.title}
       </Link>
 
@@ -57,59 +166,16 @@ export default function LessonPage() {
 
       {enrolled && (
         <div>
-          <ProgressBar percent={percent} />
-          <p className="mt-1 text-xs text-gray-500">Course progress: {percent}%</p>
+          <ProgressBar percent={progress.percent} />
+          <p className="mt-1 text-xs text-gray-500">Course progress: {progress.percent}%</p>
         </div>
       )}
 
-      {!canView ? (
-        <div className="rounded-xl border bg-white p-8 text-center">
-          <FiLock className="mx-auto mb-3 text-3xl text-gray-400" />
-          <p className="mb-4">This lesson is locked. enroll in the course to unlock it.</p>
-          {(!user || user.role === "student") && (
-            <button onClick={handleEnroll} className="rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white">
-              Enroll in this course
-            </button>
-          )}
-        </div>
-      ) : (
-        <>
-          {lesson.videoUrl && (
-            <div className="aspect-video overflow-hidden rounded-xl bg-black">
-              <iframe src={lesson.videoUrl} title={lesson.title} className="h-full w-full" allowFullScreen />
-            </div>
-          )}
-          <div className="whitespace-pre-line rounded-xl border bg-white p-5 text-gray-700">{lesson.content}</div>
-
-          {enrolled && (
-            <button
-              onClick={() => toggleLesson(id, lessonId)}
-              className={`flex items-center gap-2 rounded-lg px-4 py-2 font-semibold ${
-                isDone ? "bg-green-100 text-green-700" : "bg-blue-600 text-white"
-              }`}
-            >
-              <FiCheck /> {isDone ? "Completed (click to undo)" : "Mark as completed"}
-            </button>
-          )}
-          {!enrolled && lesson.free && (!user || user.role === "student") && (
-            <p className="text-sm text-gray-500">
-              This is a free preview. <button onClick={handleEnroll} className="text-blue-600 underline">Enroll</button> to unlock all lessons and save your progress.
-            </p>
-          )}
-        </>
-      )}
+      {middle}
 
       <div className="flex justify-between">
-        {prev ? (
-          <Link to={`/courses/${id}/lessons/${prev.id}`} className="flex items-center gap-2 rounded-lg border px-4 py-2 text-sm">
-            <FiArrowLeft /> Previous
-          </Link>
-        ) : <span />}
-        {next ? (
-          <Link to={`/courses/${id}/lessons/${next.id}`} className="flex items-center gap-2 rounded-lg border px-4 py-2 text-sm">
-            Next <FiArrowRight />
-          </Link>
-        ) : <span />}
+        {prevButton}
+        {nextButton}
       </div>
     </div>
   );

@@ -4,91 +4,170 @@ import { useApp } from "../../../utils/Mycontext";
 import ProgressBar from "../../../components/ProgressBar";
 import CourseCard from "../../../components/CourseCard";
 
+// one row for an enrolled course
+function CourseRow({ course }) {
+  const { getProgress, getEnrollment, unenroll } = useApp();
+  const progress = getProgress(course);
+  const enrollment = getEnrollment(course.id);
+
+  // which lesson to open: the last opened one, else the first not completed, else the first
+  let lessonId = null;
+  if (enrollment !== null) {
+    for (let i = 0; i < course.lessons.length; i++) {
+      if (course.lessons[i].id === enrollment.lastLessonId) {
+        lessonId = course.lessons[i].id;
+      }
+    }
+    if (lessonId === null) {
+      for (let i = 0; i < course.lessons.length; i++) {
+        if (!enrollment.completed.includes(course.lessons[i].id)) {
+          lessonId = course.lessons[i].id;
+          break;
+        }
+      }
+    }
+  }
+  if (lessonId === null && course.lessons.length > 0) {
+    lessonId = course.lessons[0].id;
+  }
+
+  function handleUnenroll() {
+    if (window.confirm('Unenroll from "' + course.title + '"? Your progress will be lost.')) {
+      unenroll(course.id);
+    }
+  }
+
+  let openButton = null;
+  if (lessonId !== null) {
+    let buttonText = "Continue";
+    if (progress.percent === 100) {
+      buttonText = "Review";
+    }
+    openButton = (
+      <Link to={"/courses/" + course.id + "/lessons/" + lessonId} className="rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-semibold text-white">
+        {buttonText}
+      </Link>
+    );
+  }
+
+  return (
+    <div className="flex flex-wrap items-center gap-4">
+      {course.image && <img src={course.image} alt="" className="h-12 w-12 rounded-lg object-cover" />}
+      <div className="min-w-[180px] flex-1">
+        <Link to={"/courses/" + course.id} className="font-semibold hover:text-blue-600">{course.title}</Link>
+        <p className="mb-1 text-xs text-gray-500">{progress.done}/{progress.total} lessons · {progress.percent}%</p>
+        <ProgressBar percent={progress.percent} />
+      </div>
+      {openButton}
+      <button onClick={handleUnenroll} className="rounded-lg border px-3 py-1.5 text-sm">Unenroll</button>
+    </div>
+  );
+}
+
 export default function Dashboard() {
-  const { courses, favourites, isEnrolled, getProgress, getEnrollment, unenroll } = useApp();
+  const { courses, favourites, isEnrolled, getProgress } = useApp();
 
-  const myCourses = courses.filter((c) => isEnrolled(c.id));
-  const inProgress = myCourses.filter((c) => getProgress(c).percent < 100);
-  const finished = myCourses.filter((c) => getProgress(c).percent === 100);
-  const saved = courses.filter((c) => favourites.includes(c.id));
-  const lessonsDone = myCourses.reduce((sum, c) => sum + getProgress(c).done, 0);
+  // sort my courses in lists
+  const myCourses = [];
+  const inProgress = [];
+  const finished = [];
+  let lessonsDone = 0;
 
-  const stats = [
-    { icon: FiBook, n: myCourses.length, label: "Enrolled courses" },
-    { icon: FiCheckCircle, n: lessonsDone, label: "Lessons completed" },
-    { icon: FiAward, n: finished.length, label: "Courses finished" },
-    { icon: FiHeart, n: saved.length, label: "Saved courses" },
-  ];
+  for (let i = 0; i < courses.length; i++) {
+    const c = courses[i];
+    if (isEnrolled(c.id)) {
+      myCourses.push(c);
+      const p = getProgress(c);
+      lessonsDone = lessonsDone + p.done;
+      if (p.percent === 100) {
+        finished.push(c);
+      } else {
+        inProgress.push(c);
+      }
+    }
+  }
 
-  const handleUnenroll = (c) => {
-    if (window.confirm(`Unenroll from "${c.title}"? Your progress will be lost.`)) unenroll(c.id);
-  };
+  const saved = [];
+  for (let i = 0; i < courses.length; i++) {
+    if (favourites.includes(courses[i].id)) {
+      saved.push(courses[i]);
+    }
+  }
 
-  const Row = ({ c }) => {
-    const { done, total, percent } = getProgress(c);
-    const e = getEnrollment(c.id);
-    const lessonId = c.lessons.some((l) => l.id === e?.lastLessonId)
-      ? e.lastLessonId
-      : (c.lessons.find((l) => !e?.completed.includes(l.id)) || c.lessons[0])?.id;
-    return (
-      <div className="flex flex-wrap items-center gap-4">
-        {c.image && <img src={c.image} alt="" className="h-12 w-12 rounded-lg object-cover" />}
-        <div className="min-w-[180px] flex-1">
-          <Link to={`/courses/${c.id}`} className="font-semibold hover:text-blue-600">{c.title}</Link>
-          <p className="mb-1 text-xs text-gray-500">{done}/{total} lessons · {percent}%</p>
-          <ProgressBar percent={percent} />
-        </div>
-        {lessonId && (
-          <Link to={`/courses/${c.id}/lessons/${lessonId}`} className="rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-semibold text-white">
-            {percent === 100 ? "Review" : "Continue"}
-          </Link>
-        )}
-        <button onClick={() => handleUnenroll(c)} className="rounded-lg border px-3 py-1.5 text-sm">Unenroll</button>
+  // makes the rows of a list of courses
+  function makeRows(list) {
+    const rows = [];
+    for (let i = 0; i < list.length; i++) {
+      rows.push(<CourseRow key={list[i].id} course={list[i]} />);
+    }
+    return rows;
+  }
+
+  let inProgressBox;
+  if (inProgress.length === 0) {
+    inProgressBox = <p className="text-gray-500">Nothing in progress. <Link to="/courses" className="text-blue-600">Find a course</Link></p>;
+  } else {
+    inProgressBox = <div className="space-y-5">{makeRows(inProgress)}</div>;
+  }
+
+  let finishedBox;
+  if (finished.length === 0) {
+    finishedBox = <p className="text-gray-500">No completed course yet. Finish all lessons of a course to see it here.</p>;
+  } else {
+    finishedBox = <div className="space-y-5">{makeRows(finished)}</div>;
+  }
+
+  let savedBox;
+  if (saved.length === 0) {
+    savedBox = <p className="text-gray-500">No saved course. Tap the heart on a course to save it.</p>;
+  } else {
+    savedBox = (
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {saved.map((c) => <CourseCard key={c.id} course={c} />)}
       </div>
     );
-  };
+  }
 
   return (
     <div className="space-y-6">
       <h2 className="text-2xl ">My Dashboard</h2>
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        {stats.map(({ icon: Icon, n, label }) => (
-          <div key={label} className="rounded-xl shadow shadow-blue-500 bg-white p-4 shadow-sm">
-            <Icon className="mb-2 text-blue-600" size={22} />
-            <h3 className="text-2xl font-bold">{n}</h3>
-            <p className="text-sm text-gray-500">{label}</p>
-          </div>
-        ))}
+        <div className="rounded-xl shadow shadow-blue-500 bg-white p-4 shadow-sm">
+          <FiBook className="mb-2 text-blue-600" size={22} />
+          <h3 className="text-2xl font-bold">{myCourses.length}</h3>
+          <p className="text-sm text-gray-500">Enrolled courses</p>
+        </div>
+        <div className="rounded-xl shadow shadow-blue-500 bg-white p-4 shadow-sm">
+          <FiCheckCircle className="mb-2 text-blue-600" size={22} />
+          <h3 className="text-2xl font-bold">{lessonsDone}</h3>
+          <p className="text-sm text-gray-500">Lessons completed</p>
+        </div>
+        <div className="rounded-xl shadow shadow-blue-500 bg-white p-4 shadow-sm">
+          <FiAward className="mb-2 text-blue-600" size={22} />
+          <h3 className="text-2xl font-bold">{finished.length}</h3>
+          <p className="text-sm text-gray-500">Courses finished</p>
+        </div>
+        <div className="rounded-xl shadow shadow-blue-500 bg-white p-4 shadow-sm">
+          <FiHeart className="mb-2 text-blue-600" size={22} />
+          <h3 className="text-2xl font-bold">{saved.length}</h3>
+          <p className="text-sm text-gray-500">Saved courses</p>
+        </div>
       </div>
 
       <section className="rounded-xl shadow shadow-blue-500 bg-white p-6">
         <h3 className="mb-4 font-bold">In progress</h3>
-        {inProgress.length === 0 ? (
-          <p className="text-gray-500">Nothing in progress. <Link to="/courses" className="text-blue-600">Find a course</Link></p>
-        ) : (
-          <div className="space-y-5">{inProgress.map((c) => <Row key={c.id} c={c} />)}</div>
-        )}
+        {inProgressBox}
       </section>
 
       <section className="rounded-xl shadow shadow-blue-500 bg-white p-6">
         <h3 className="mb-4 font-bold">Completed courses</h3>
-        {finished.length === 0 ? (
-          <p className="text-gray-500">No completed course yet. Finish all lessons of a course to see it here.</p>
-        ) : (
-          <div className="space-y-5">{finished.map((c) => <Row key={c.id} c={c} />)}</div>
-        )}
+        {finishedBox}
       </section>
 
       <section>
         <h3 className="mb-3 font-bold">Saved courses</h3>
-        {saved.length === 0 ? (
-          <p className="text-gray-500">No saved course. Tap the heart on a course to save it.</p>
-        ) : (
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            {saved.map((c) => <CourseCard key={c.id} course={c} />)}
-          </div>
-        )}
+        {savedBox}
       </section>
     </div>
   );
