@@ -15,7 +15,7 @@ export default function CourseCard({ course }) {
   };
 
   return (
-    <div className="relative overflow-hidden rounded-xl border bg-white shadow-sm">
+    <div className="relative overflow-hidden rounded-xl  bg-white shadow shadow-blue-500">
       {user?.role !== "instructor" && (
         <button
           onClick={handleHeart}

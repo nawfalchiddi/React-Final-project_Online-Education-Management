@@ -7,7 +7,6 @@ import ProgressBar from "../../../components/ProgressBar";
 const emptyLesson = { title: "", duration: "", content: "", videoUrl: "", free: false };
 const input = "mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:border-blue-500";
 
-// Wrapper: finds the course and makes sure it belongs to this instructor
 export default function CourseEditor() {
   const { id } = useParams();
   const { courses, user } = useApp();
@@ -36,7 +35,7 @@ function EditorForm({ course }) {
     description: course?.description || "",
   });
   const [saved, setSaved] = useState(false);
-  const [lf, setLf] = useState(emptyLesson); // lesson form
+  const [lf, setLf] = useState(emptyLesson); 
   const [editingId, setEditingId] = useState(null);
 
   const change = (e) => {
@@ -51,7 +50,7 @@ function EditorForm({ course }) {
       setSaved(true);
     } else {
       const newId = addCourse(form);
-      navigate(`/instructor/courses/${newId}`, { replace: true }); // now you can add lessons
+      navigate(`/instructor/courses/${newId}`, { replace: true }); 
     }
   };
 
@@ -71,13 +70,13 @@ function EditorForm({ course }) {
   const startEdit = (l) => {
     setEditingId(l.id);
     setLf({ title: l.title, duration: l.duration, content: l.content, videoUrl: l.videoUrl, free: l.free });
-  };
+  }
 
   const handleDeleteLesson = (l) => {
     if (window.confirm(`Delete lesson "${l.title}"?`)) deleteLesson(course.id, l.id);
-  };
+  }
 
-  const students = course ? getStudents(course.id) : [];
+  const students = course ? getStudents(course.id) : []
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
@@ -85,7 +84,6 @@ function EditorForm({ course }) {
         <FiArrowLeft /> Instructor dashboard
       </Link>
 
-      {/* COURSE FORM */}
       <form onSubmit={saveCourse} className="space-y-4 rounded-xl border bg-white p-6">
         <h2 className="text-xl font-bold">{course ? "Edit course" : "New course"}</h2>
 
@@ -126,7 +124,7 @@ function EditorForm({ course }) {
 
       {course && (
         <>
-          {/* LESSONS LIST */}
+       
           <section className="rounded-xl border bg-white">
             <h3 className="border-b p-4 font-bold">Lessons ({course.lessons.length})</h3>
             {course.lessons.length === 0 && <p className="p-4 text-sm text-gray-500">No lesson yet. Add the first one below.</p>}
@@ -151,7 +149,7 @@ function EditorForm({ course }) {
             </ul>
           </section>
 
-          {/* LESSON FORM */}
+ 
           <form onSubmit={saveLesson} className="space-y-4 rounded-xl border bg-white p-6">
             <h3 className="font-bold">{editingId ? "Edit lesson" : "Add a lesson"}</h3>
             <div className="grid gap-4 sm:grid-cols-2">
@@ -187,7 +185,7 @@ function EditorForm({ course }) {
             </div>
           </form>
 
-          {/* STUDENTS */}
+
           <section className="rounded-xl border bg-white p-6">
             <h3 className="mb-4 font-bold">Enrolled students ({students.length})</h3>
             {students.length === 0 ? (

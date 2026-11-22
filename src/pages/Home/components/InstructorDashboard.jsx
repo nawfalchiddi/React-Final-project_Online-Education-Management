@@ -13,7 +13,10 @@ export default function InstructorDashboard() {
   const max = Math.max(1, ...popular.map((c) => enrollmentCount(c.id)));
 
   const stats = [
-    { icon: FiBook, n: mine.length, label: "My courses" },
+    { icon: FiBook,
+       n: mine.length,
+        label: "My courses"
+       },
     { icon: FiUsers, n: totalEnrollments, label: "Enrollments" },
     { icon: FiList, n: totalLessons, label: "Lessons" },
   ];

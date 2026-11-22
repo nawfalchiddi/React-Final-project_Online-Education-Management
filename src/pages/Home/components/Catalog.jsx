@@ -23,17 +23,17 @@ export default function Catalog() {
       (!level || c.level === level)
   );
 
-  const select = "rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm";
+  const select = "rounded-lg shadow shadow-blue-500 outline-none focus:border-blue-500 focus:shadow shadow-blue-400 bg-white px-3 py-2 text-sm";
 
   return (
     <div className="space-y-5">
-      <h2 className="text-2xl font-bold">Courses catalog</h2>
+      <h2 className="text-2xl italic">Courses catalog</h2>
 
       <div className="flex flex-wrap gap-3">
         <input
           type="search" value={q} placeholder="Search by title or instructor"
           onChange={(e) => setParam("q", e.target.value)}
-          className={`${select} w-full sm:w-72`}
+          className={`${select} w-full sm:w-72 `}
         />
         <select value={category} onChange={(e) => setParam("category", e.target.value)} className={select} aria-label="Category">
           <option value="">All categories</option>

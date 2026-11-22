@@ -24,7 +24,6 @@ export default function Dashboard() {
     if (window.confirm(`Unenroll from "${c.title}"? Your progress will be lost.`)) unenroll(c.id);
   };
 
-  // one row of an enrolled course
   const Row = ({ c }) => {
     const { done, total, percent } = getProgress(c);
     const e = getEnrollment(c.id);
@@ -51,11 +50,11 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold">My dashboard</h2>
+      <h2 className="text-2xl ">My Dashboard</h2>
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {stats.map(({ icon: Icon, n, label }) => (
-          <div key={label} className="rounded-xl border bg-white p-4 shadow-sm">
+          <div key={label} className="rounded-xl shadow shadow-blue-500 bg-white p-4 shadow-sm">
             <Icon className="mb-2 text-blue-600" size={22} />
             <h3 className="text-2xl font-bold">{n}</h3>
             <p className="text-sm text-gray-500">{label}</p>
@@ -63,7 +62,7 @@ export default function Dashboard() {
         ))}
       </div>
 
-      <section className="rounded-xl border bg-white p-6">
+      <section className="rounded-xl shadow shadow-blue-500 bg-white p-6">
         <h3 className="mb-4 font-bold">In progress</h3>
         {inProgress.length === 0 ? (
           <p className="text-gray-500">Nothing in progress. <Link to="/courses" className="text-blue-600">Find a course</Link></p>
@@ -72,7 +71,7 @@ export default function Dashboard() {
         )}
       </section>
 
-      <section className="rounded-xl border bg-white p-6">
+      <section className="rounded-xl shadow shadow-blue-500 bg-white p-6">
         <h3 className="mb-4 font-bold">Completed courses</h3>
         {finished.length === 0 ? (
           <p className="text-gray-500">No completed course yet. Finish all lessons of a course to see it here.</p>

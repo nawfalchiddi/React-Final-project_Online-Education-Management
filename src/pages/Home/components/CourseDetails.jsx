@@ -27,14 +27,13 @@ export default function CourseDetails() {
   const { done, total, percent } = getProgress(course);
   const fav = isFavourite(course.id);
 
-  // "Continue where you left off": last opened lesson, else first lesson not completed
   const lastOk = course.lessons.some((l) => l.id === enrollment?.lastLessonId);
   const continueId = lastOk
     ? enrollment.lastLessonId
     : (course.lessons.find((l) => !completed.includes(l.id)) || course.lessons[0])?.id;
 
   const handleEnroll = () => {
-    if (!user) navigate("/login", { state: { from: `/courses/${course.id}` } }); // visitors log in first
+    if (!user) navigate("/login", { state: { from: `/courses/${course.id}` } })
     else enroll(course.id);
   };
 

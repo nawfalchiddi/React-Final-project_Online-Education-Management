@@ -16,11 +16,17 @@ export default function LessonPage() {
   const isOwner = user && course && user.email === course.ownerEmail;
   const canView = !!lesson && (enrolled || lesson.free || isOwner);
 
-  // remember the last opened lesson ("continue where you left off")
   useEffect(() => {
-    if (enrolled && lesson) setLastLesson(id, lessonId);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [enrolled, id, lessonId]);
+    if (enrolled && lesson) setLastLesson(id, lessonId)
+
+
+
+
+    // eslint-disable-next-line 
+    // react-hooks/exhaustive-deps
+
+
+  }, [enrolled, id, lessonId])
 
   if (!course || !lesson) {
     return (
@@ -47,7 +53,7 @@ export default function LessonPage() {
         <FiArrowLeft /> {course.title}
       </Link>
 
-      <h2 className="text-2xl font-bold">{index + 1}. {lesson.title}</h2>
+      <h2 className="text-2xl italic">{index + 1}. {lesson.title}</h2>
 
       {enrolled && (
         <div>
@@ -59,7 +65,7 @@ export default function LessonPage() {
       {!canView ? (
         <div className="rounded-xl border bg-white p-8 text-center">
           <FiLock className="mx-auto mb-3 text-3xl text-gray-400" />
-          <p className="mb-4">This lesson is locked. Enroll in the course to unlock it.</p>
+          <p className="mb-4">This lesson is locked. enroll in the course to unlock it.</p>
           {(!user || user.role === "student") && (
             <button onClick={handleEnroll} className="rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white">
               Enroll in this course
