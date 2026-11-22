@@ -1,54 +1,68 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useEffect, useState } from "react";
 
-/* ---------------- 1) SEED DATA (first start only) ---------------- */
+/* ================= 1) STATIC DATA ================= */
 export const categories = ["Design", "Programming", "Marketing", "Photography"];
 export const levels = ["Beginner", "Intermediate", "Advanced"];
 
 const OWNER = "instructor@learnpro.com";
 
-const mk = (id, title, category, instructor, level, image, description, lessonTitles) => ({
-  id, title, category, instructor, level, image, description, ownerEmail: OWNER,
-  lessons: lessonTitles.map((t, i) => ({
-    id: `${id}-l${i + 1}`,
-    title: t,
-    duration: `${8 + i * 3} min`,
-    content: `Welcome to "${t}". Read this lesson, practice, then mark it as completed.`,
-    videoUrl: "",
-    free: i === 0, // first lesson = free preview
-  })),
-});
+// builds one course object (the lessons are created from the titles)
+function makeCourse(id, title, category, instructor, level, image, description, lessonTitles) {
+  const lessons = [];
+  for (let i = 0; i < lessonTitles.length; i++) {
+    lessons.push({
+      id: id + "-l" + (i + 1),
+      title: lessonTitles[i],
+      duration: 8 + i * 3 + " min",
+      content: 'Welcome to "' + lessonTitles[i] + '". Read this lesson, practice, then mark it as completed.',
+      videoUrl: "",
+      free: i === 0, // first lesson = free preview
+    });
+  }
+  return {
+    id: id,
+    title: title,
+    category: category,
+    instructor: instructor,
+    level: level,
+    image: image,
+    description: description,
+    ownerEmail: OWNER,
+    lessons: lessons,
+  };
+}
 
 const seedCourses = [
-  mk("ux", "UI/UX Design Fundamentals", "Design", "Jane Cooper", "Beginner",
+  makeCourse("ux", "UI/UX Design Fundamentals", "Design", "Jane Cooper", "Beginner",
     "https://anddreamsdigital.com/wp-content/uploads/2023/01/what-is-ui-ux-design-1210x660.jpg",
     "Learn the basics of user research, wireframing and visual design.",
     ["What is UX?", "User research", "Wireframes", "Color & typography", "Prototyping in Figma"]),
-  mk("brand", "Brand Identity Design", "Design", "Leslie Alexander", "Intermediate",
+  makeCourse("brand", "Brand Identity Design", "Design", "Leslie Alexander", "Intermediate",
     "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSdxX_tUxvqlBPzBz1PmsPe2S7A1Kc0ZVxhLJfprw1d1ZGGRTMPK7E23fjN&s=10",
     "Create logos and brand systems that people remember.",
     ["Brand strategy", "Logo basics", "Color systems", "Brand guidelines"]),
-  mk("py", "Python Programming for Beginners", "Programming", "Robert Fox", "Beginner",
+  makeCourse("py", "Python Programming for Beginners", "Programming", "Robert Fox", "Beginner",
     "https://files.realpython.com/media/building_with_python_watermark.2ebe5beb5b1e.jpg",
     "Start coding with Python: variables, loops, functions and more.",
     ["Install Python", "Variables & types", "Conditions", "Loops", "Functions", "Mini project"]),
-  mk("react", "React for Beginners", "Programming", "Cody Fisher", "Intermediate",
+  makeCourse("react", "React for Beginners", "Programming", "Cody Fisher", "Intermediate",
     "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRZdSEdU4nTcHCZSH4N3tLbtTZjSvOSvDrmv_leu0ookzNVLxcc3t7i8Uc&s=10",
     "Build modern interfaces with components, props, state and hooks.",
     ["JSX", "Components & props", "State", "Effects", "Routing"]),
-  mk("dm", "Digital Marketing Strategy", "Marketing", "Albert Flores", "Beginner",
+  makeCourse("dm", "Digital Marketing Strategy", "Marketing", "Albert Flores", "Beginner",
     "https://blog.tuf.edu.pk/wp-content/uploads/2021/06/Digital-Marketing.jpg",
     "Plan campaigns across social media, email and search.",
     ["Marketing funnel", "Social media", "Email campaigns", "SEO basics"]),
-  mk("ma", "Marketing Analytics", "Marketing", "Albert Flores", "Advanced",
+  makeCourse("ma", "Marketing Analytics", "Marketing", "Albert Flores", "Advanced",
     "https://i2idirectmarketing.com/wp-content/uploads/2023/01/Marketing-Analytics.jpg",
     "Measure what matters and make decisions with data.",
     ["KPIs", "Google Analytics", "A/B testing"]),
-  mk("photo", "Photography Masterclass", "Photography", "Brooklyn Simmons", "Beginner",
+  makeCourse("photo", "Photography Masterclass", "Photography", "Brooklyn Simmons", "Beginner",
     "https://i.ytimg.com/vi/8VuKE6GV6q0/maxresdefault.jpg",
     "Understand your camera, light and composition.",
     ["Camera basics", "Exposure triangle", "Composition", "Editing"]),
-  mk("portrait", "Portrait Photography", "Photography", "Kristin Watson", "Intermediate",
+  makeCourse("portrait", "Portrait Photography", "Photography", "Kristin Watson", "Intermediate",
     "https://www.australianphotographyschool.com.au/wp-content/uploads/shutterstock_2519105737-scaled.jpg",
     "Pose, light and retouch portraits like a pro.",
     ["Posing", "Natural light", "Studio light", "Retouching"]),
@@ -57,157 +71,454 @@ const seedCourses = [
 // Demo instructor account: instructor@learnpro.com / 123456
 const seedAccounts = [{ name: "Jane Cooper", email: OWNER, password: "123456", role: "instructor" }];
 
-/* ---------------- 2) CONTEXT ---------------- */
-export const TheDataCont = createContext(null);
-export const useApp = () => useContext(TheDataCont);
-
-// useState that is saved in localStorage
-function usePersistent(key, initial) {
-  const [value, setValue] = useState(() => {
-    try {
-      const saved = localStorage.getItem(key);
-      return saved ? JSON.parse(saved) : initial;
-    } catch {
-      return initial;
-    }
-  });
-  useEffect(() => localStorage.setItem(key, JSON.stringify(value)), [key, value]);
-  return [value, setValue];
+// reads a value from the browser memory (localStorage)
+function loadFromStorage(key, defaultValue) {
+  const saved = localStorage.getItem(key);
+  if (saved === null) {
+    return defaultValue;
+  }
+  try {
+    return JSON.parse(saved);
+  } catch {
+    return defaultValue;
+  }
 }
 
-/* ---------------- 3) PROVIDER ---------------- */
-export const Theprovider = ({ children }) => {
-  const [accounts, setAccounts] = usePersistent("lp_accounts", seedAccounts); // everyone who signed up
-  const [user, setUser] = usePersistent("lp_session", null);                  // logged-in user
-  const [courses, setCourses] = usePersistent("lp_courses", seedCourses);
-  // one row per student + course: { email, courseId, completed: [lessonIds], lastLessonId }
-  const [enrollments, setEnrollments] = usePersistent("lp_enrollments", []);
-  const [favs, setFavs] = usePersistent("lp_favs", {});                        // { email: [courseIds] }
+/* ================= 2) CONTEXT ================= */
+export const TheDataCont = createContext(null);
 
-  const email = user?.email;
+export function useApp() {
+  return useContext(TheDataCont);
+}
 
-  /* ----- auth ----- */
-  const signup = ({ name, email, password, role }) => {
-    const mail = email.trim().toLowerCase();
-    if (accounts.some((a) => a.email === mail)) {
-      return { ok: false, error: "This email is already registered." };
+/* ================= 3) PROVIDER ================= */
+export function Theprovider({ children }) {
+  // The data. (We pass a function to useState so it reads localStorage only once.)
+  const [accounts, setAccounts] = useState(() => loadFromStorage("lp_accounts", seedAccounts));
+  const [user, setUser] = useState(() => loadFromStorage("lp_session", null));
+  const [courses, setCourses] = useState(() => loadFromStorage("lp_courses", seedCourses));
+  // enrollments: one row per student + course  { email, courseId, completed: [lessonIds], lastLessonId }
+  const [enrollments, setEnrollments] = useState(() => loadFromStorage("lp_enrollments", []));
+  // favs: { "ali@mail.com": ["py", "ux"] }
+  const [favs, setFavs] = useState(() => loadFromStorage("lp_favs", {}));
+
+  // Save to localStorage each time the data changes
+  useEffect(() => {
+    localStorage.setItem("lp_accounts", JSON.stringify(accounts));
+  }, [accounts]);
+  useEffect(() => {
+    localStorage.setItem("lp_session", JSON.stringify(user));
+  }, [user]);
+  useEffect(() => {
+    localStorage.setItem("lp_courses", JSON.stringify(courses));
+  }, [courses]);
+  useEffect(() => {
+    localStorage.setItem("lp_enrollments", JSON.stringify(enrollments));
+  }, [enrollments]);
+  useEffect(() => {
+    localStorage.setItem("lp_favs", JSON.stringify(favs));
+  }, [favs]);
+
+  // email of the logged-in user (null if nobody)
+  let email = null;
+  if (user !== null) {
+    email = user.email;
+  }
+
+  /* ---------- small helper ---------- */
+  function findCourse(courseId) {
+    for (let i = 0; i < courses.length; i++) {
+      if (courses[i].id === courseId) {
+        return courses[i];
+      }
     }
-    setAccounts([...accounts, { name: name.trim(), email: mail, password, role }]);
+    return null;
+  }
+
+  /* ---------- login / signup ---------- */
+  function signup(data) {
+    const mail = data.email.trim().toLowerCase();
+    for (let i = 0; i < accounts.length; i++) {
+      if (accounts[i].email === mail) {
+        return { ok: false, error: "This email is already registered." };
+      }
+    }
+    const newAccount = {
+      name: data.name.trim(),
+      email: mail,
+      password: data.password,
+      role: data.role,
+    };
+    setAccounts(accounts.concat([newAccount]));
     return { ok: true };
-  };
+  }
 
-  const login = (mail, password) => {
-    const found = accounts.find((a) => a.email === mail.trim().toLowerCase() && a.password === password);
-    if (!found) return { ok: false, error: "Wrong email or password." };
-    setUser({ name: found.name, email: found.email, role: found.role });
-    return { ok: true, role: found.role };
-  };
+  function login(mail, password) {
+    const cleanMail = mail.trim().toLowerCase();
+    for (let i = 0; i < accounts.length; i++) {
+      const a = accounts[i];
+      if (a.email === cleanMail && a.password === password) {
+        setUser({ name: a.name, email: a.email, role: a.role }); // no password in the session
+        return { ok: true, role: a.role };
+      }
+    }
+    return { ok: false, error: "Wrong email or password." };
+  }
 
-  const logout = () => setUser(null);
+  function logout() {
+    setUser(null);
+  }
 
-  /* ----- instructor: courses ----- */
-  const addCourse = (data) => {
-    const id = crypto.randomUUID();
-    setCourses((prev) => [...prev, { ...data, id, ownerEmail: email, instructor: user.name, lessons: [] }]);
-    return id;
-  };
-  const updateCourse = (id, patch) =>
-    setCourses((prev) => prev.map((c) => (c.id === id ? { ...c, ...patch } : c)));
-  const deleteCourse = (id) => {
-    setCourses((prev) => prev.filter((c) => c.id !== id));
-    setEnrollments((prev) => prev.filter((e) => e.courseId !== id));
-  };
+  /* ---------- instructor: courses ---------- */
+  function addCourse(data) {
+    const newId = crypto.randomUUID();
+    const newCourse = {
+      id: newId,
+      title: data.title,
+      category: data.category,
+      level: data.level,
+      image: data.image,
+      description: data.description,
+      ownerEmail: email,
+      instructor: user.name,
+      lessons: [],
+    };
+    setCourses(courses.concat([newCourse]));
+    return newId;
+  }
 
-  /* ----- instructor: lessons ----- */
-  const changeLessons = (courseId, fn) =>
-    setCourses((prev) => prev.map((c) => (c.id === courseId ? { ...c, lessons: fn(c.lessons) } : c)));
+  function updateCourse(courseId, changes) {
+    const newCourses = [];
+    for (let i = 0; i < courses.length; i++) {
+      const c = courses[i];
+      if (c.id === courseId) {
+        newCourses.push({ ...c, ...changes }); // copy the course, then overwrite the changed fields
+      } else {
+        newCourses.push(c);
+      }
+    }
+    setCourses(newCourses);
+  }
 
-  const addLesson = (courseId, data) =>
-    changeLessons(courseId, (list) => [...list, { ...data, id: crypto.randomUUID() }]);
-  const updateLesson = (courseId, lessonId, patch) =>
-    changeLessons(courseId, (list) => list.map((l) => (l.id === lessonId ? { ...l, ...patch } : l)));
-  const deleteLesson = (courseId, lessonId) =>
-    changeLessons(courseId, (list) => list.filter((l) => l.id !== lessonId));
-  const moveLesson = (courseId, lessonId, dir) =>
-    changeLessons(courseId, (list) => {
-      const i = list.findIndex((l) => l.id === lessonId);
-      const j = i + dir;
-      if (i < 0 || j < 0 || j >= list.length) return list;
-      const copy = [...list];
-      [copy[i], copy[j]] = [copy[j], copy[i]];
-      return copy;
-    });
+  function deleteCourse(courseId) {
+    const newCourses = [];
+    for (let i = 0; i < courses.length; i++) {
+      if (courses[i].id !== courseId) {
+        newCourses.push(courses[i]);
+      }
+    }
+    setCourses(newCourses);
 
-  /* ----- student: enrollment and progress ----- */
-  const getEnrollment = (courseId) => enrollments.find((e) => e.email === email && e.courseId === courseId);
-  const isEnrolled = (courseId) => !!getEnrollment(courseId);
+    // also remove the students' enrollments of this course
+    const newEnrollments = [];
+    for (let i = 0; i < enrollments.length; i++) {
+      if (enrollments[i].courseId !== courseId) {
+        newEnrollments.push(enrollments[i]);
+      }
+    }
+    setEnrollments(newEnrollments);
+  }
 
-  const enroll = (courseId) => {
-    if (!email || user.role !== "student") return;
-    setEnrollments((prev) =>
-      prev.some((e) => e.email === email && e.courseId === courseId)
-        ? prev // no double enrollment
-        : [...prev, { email, courseId, completed: [], lastLessonId: null }]
-    );
-  };
-  const unenroll = (courseId) =>
-    setEnrollments((prev) => prev.filter((e) => !(e.email === email && e.courseId === courseId)));
+  /* ---------- instructor: lessons ---------- */
+  // puts a new list of lessons inside a course
+  function setLessonsOfCourse(courseId, newLessons) {
+    const newCourses = [];
+    for (let i = 0; i < courses.length; i++) {
+      const c = courses[i];
+      if (c.id === courseId) {
+        newCourses.push({ ...c, lessons: newLessons });
+      } else {
+        newCourses.push(c);
+      }
+    }
+    setCourses(newCourses);
+  }
 
-  const patchEnrollment = (courseId, fn) =>
-    setEnrollments((prev) => prev.map((e) => (e.email === email && e.courseId === courseId ? fn(e) : e)));
+  function addLesson(courseId, data) {
+    const course = findCourse(courseId);
+    if (course === null) return;
+    const newLesson = {
+      id: crypto.randomUUID(),
+      title: data.title,
+      duration: data.duration,
+      content: data.content,
+      videoUrl: data.videoUrl,
+      free: data.free,
+    };
+    setLessonsOfCourse(courseId, course.lessons.concat([newLesson]));
+  }
 
-  const toggleLesson = (courseId, lessonId) =>
-    patchEnrollment(courseId, (e) => ({
-      ...e,
-      completed: e.completed.includes(lessonId)
-        ? e.completed.filter((x) => x !== lessonId)
-        : [...e.completed, lessonId],
-    }));
+  function updateLesson(courseId, lessonId, data) {
+    const course = findCourse(courseId);
+    if (course === null) return;
+    const newLessons = [];
+    for (let i = 0; i < course.lessons.length; i++) {
+      const l = course.lessons[i];
+      if (l.id === lessonId) {
+        newLessons.push({ ...l, ...data });
+      } else {
+        newLessons.push(l);
+      }
+    }
+    setLessonsOfCourse(courseId, newLessons);
+  }
 
-  const setLastLesson = (courseId, lessonId) =>
-    patchEnrollment(courseId, (e) => (e.lastLessonId === lessonId ? e : { ...e, lastLessonId: lessonId }));
+  function deleteLesson(courseId, lessonId) {
+    const course = findCourse(courseId);
+    if (course === null) return;
+    const newLessons = [];
+    for (let i = 0; i < course.lessons.length; i++) {
+      if (course.lessons[i].id !== lessonId) {
+        newLessons.push(course.lessons[i]);
+      }
+    }
+    setLessonsOfCourse(courseId, newLessons);
+  }
 
-  // Always recalculated from the CURRENT lessons, so adding/deleting/un-marking updates the percent
-  const getProgress = (course, mail = email) => {
-    const e = enrollments.find((x) => x.email === mail && x.courseId === course.id);
+  // direction: -1 = move up, 1 = move down
+  function moveLesson(courseId, lessonId, direction) {
+    const course = findCourse(courseId);
+    if (course === null) return;
+    const list = course.lessons.slice(); // a copy
+
+    let i = -1;
+    for (let k = 0; k < list.length; k++) {
+      if (list[k].id === lessonId) {
+        i = k;
+      }
+    }
+    const j = i + direction; // the neighbour
+    if (i === -1 || j < 0 || j >= list.length) return;
+
+    const temp = list[i]; // swap
+    list[i] = list[j];
+    list[j] = temp;
+    setLessonsOfCourse(courseId, list);
+  }
+
+  /* ---------- student: enrollment ---------- */
+  // the enrollment of the logged-in student in this course (or null)
+  function getEnrollment(courseId) {
+    for (let i = 0; i < enrollments.length; i++) {
+      const e = enrollments[i];
+      if (e.email === email && e.courseId === courseId) {
+        return e;
+      }
+    }
+    return null;
+  }
+
+  function isEnrolled(courseId) {
+    return getEnrollment(courseId) !== null;
+  }
+
+  function enroll(courseId) {
+    if (user === null) return;
+    if (user.role !== "student") return;
+    if (isEnrolled(courseId)) return; // no double enrollment
+    const newEnrollment = { email: email, courseId: courseId, completed: [], lastLessonId: null };
+    setEnrollments(enrollments.concat([newEnrollment]));
+  }
+
+  function unenroll(courseId) {
+    const newEnrollments = [];
+    for (let i = 0; i < enrollments.length; i++) {
+      const e = enrollments[i];
+      if (e.email === email && e.courseId === courseId) {
+        // skip it = remove it
+      } else {
+        newEnrollments.push(e);
+      }
+    }
+    setEnrollments(newEnrollments);
+  }
+
+  // mark a lesson as completed, or un-mark it
+  function toggleLesson(courseId, lessonId) {
+    const newEnrollments = [];
+    for (let i = 0; i < enrollments.length; i++) {
+      const e = enrollments[i];
+      if (e.email === email && e.courseId === courseId) {
+        let newCompleted = [];
+        if (e.completed.includes(lessonId)) {
+          for (let k = 0; k < e.completed.length; k++) {
+            if (e.completed[k] !== lessonId) {
+              newCompleted.push(e.completed[k]);
+            }
+          }
+        } else {
+          newCompleted = e.completed.concat([lessonId]);
+        }
+        newEnrollments.push({
+          email: e.email,
+          courseId: e.courseId,
+          completed: newCompleted,
+          lastLessonId: e.lastLessonId,
+        });
+      } else {
+        newEnrollments.push(e);
+      }
+    }
+    setEnrollments(newEnrollments);
+  }
+
+  // remember the last lesson the student opened
+  function setLastLesson(courseId, lessonId) {
+    let changed = false;
+    const newEnrollments = [];
+    for (let i = 0; i < enrollments.length; i++) {
+      const e = enrollments[i];
+      if (e.email === email && e.courseId === courseId && e.lastLessonId !== lessonId) {
+        newEnrollments.push({
+          email: e.email,
+          courseId: e.courseId,
+          completed: e.completed,
+          lastLessonId: lessonId,
+        });
+        changed = true;
+      } else {
+        newEnrollments.push(e);
+      }
+    }
+    if (changed) {
+      setEnrollments(newEnrollments);
+    }
+  }
+
+  // progress is calculated each time from the CURRENT lessons
+  function getProgress(course, mail) {
+    let who = mail;
+    if (who === undefined) {
+      who = email; // by default: the logged-in student
+    }
+
+    let enrollment = null;
+    for (let i = 0; i < enrollments.length; i++) {
+      if (enrollments[i].email === who && enrollments[i].courseId === course.id) {
+        enrollment = enrollments[i];
+      }
+    }
+
     const total = course.lessons.length;
-    const done = e ? course.lessons.filter((l) => e.completed.includes(l.id)).length : 0;
-    return { done, total, percent: total ? Math.round((done / total) * 100) : 0 };
-  };
+    let done = 0;
+    if (enrollment !== null) {
+      for (let i = 0; i < course.lessons.length; i++) {
+        if (enrollment.completed.includes(course.lessons[i].id)) {
+          done = done + 1;
+        }
+      }
+    }
 
-  /* ----- instructor: students ----- */
-  const enrollmentCount = (courseId) => enrollments.filter((e) => e.courseId === courseId).length;
-  const getStudents = (courseId) => {
-    const course = courses.find((c) => c.id === courseId);
-    return enrollments
-      .filter((e) => e.courseId === courseId)
-      .map((e) => ({
-        email: e.email,
-        name: accounts.find((a) => a.email === e.email)?.name || e.email,
-        ...getProgress(course, e.email),
-      }));
-  };
+    let percent = 0;
+    if (total > 0) {
+      percent = Math.round((done / total) * 100);
+    }
+    return { done: done, total: total, percent: percent };
+  }
 
-  /* ----- favourites (per student) ----- */
-  const favourites = (favs[email] || []).filter((id) => courses.some((c) => c.id === id));
-  const isFavourite = (id) => favourites.includes(id);
-  const toggleFavourite = (id) => {
-    if (!email) return;
-    setFavs((prev) => {
-      const list = prev[email] || [];
-      return { ...prev, [email]: list.includes(id) ? list.filter((x) => x !== id) : [...list, id] };
-    });
-  };
+  /* ---------- instructor: students ---------- */
+  function enrollmentCount(courseId) {
+    let count = 0;
+    for (let i = 0; i < enrollments.length; i++) {
+      if (enrollments[i].courseId === courseId) {
+        count = count + 1;
+      }
+    }
+    return count;
+  }
+
+  function getStudents(courseId) {
+    const course = findCourse(courseId);
+    const students = [];
+    if (course === null) return students;
+
+    for (let i = 0; i < enrollments.length; i++) {
+      const e = enrollments[i];
+      if (e.courseId === courseId) {
+        let name = e.email;
+        for (let k = 0; k < accounts.length; k++) {
+          if (accounts[k].email === e.email) {
+            name = accounts[k].name;
+          }
+        }
+        const progress = getProgress(course, e.email);
+        students.push({
+          email: e.email,
+          name: name,
+          done: progress.done,
+          total: progress.total,
+          percent: progress.percent,
+        });
+      }
+    }
+    return students;
+  }
+
+  /* ---------- favourites (saved courses) ---------- */
+  // ids of the saved courses of the logged-in student (only courses that still exist)
+  const favourites = [];
+  if (email !== null && favs[email] !== undefined) {
+    for (let i = 0; i < favs[email].length; i++) {
+      if (findCourse(favs[email][i]) !== null) {
+        favourites.push(favs[email][i]);
+      }
+    }
+  }
+
+  function isFavourite(courseId) {
+    return favourites.includes(courseId);
+  }
+
+  function toggleFavourite(courseId) {
+    if (email === null) return;
+
+    let oldList = [];
+    if (favs[email] !== undefined) {
+      oldList = favs[email];
+    }
+
+    let newList = [];
+    if (oldList.includes(courseId)) {
+      for (let i = 0; i < oldList.length; i++) {
+        if (oldList[i] !== courseId) {
+          newList.push(oldList[i]);
+        }
+      }
+    } else {
+      newList = oldList.concat([courseId]);
+    }
+
+    const newFavs = { ...favs };
+    newFavs[email] = newList;
+    setFavs(newFavs);
+  }
 
   const value = {
-    user, courses, favourites,
-    signup, login, logout,
-    addCourse, updateCourse, deleteCourse,
-    addLesson, updateLesson, deleteLesson, moveLesson,
-    enroll, unenroll, isEnrolled, getEnrollment, toggleLesson, setLastLesson, getProgress,
-    enrollmentCount, getStudents,
-    isFavourite, toggleFavourite,
+    user: user,
+    courses: courses,
+    favourites: favourites,
+    signup: signup,
+    login: login,
+    logout: logout,
+    addCourse: addCourse,
+    updateCourse: updateCourse,
+    deleteCourse: deleteCourse,
+    addLesson: addLesson,
+    updateLesson: updateLesson,
+    deleteLesson: deleteLesson,
+    moveLesson: moveLesson,
+    enroll: enroll,
+    unenroll: unenroll,
+    isEnrolled: isEnrolled,
+    getEnrollment: getEnrollment,
+    toggleLesson: toggleLesson,
+    setLastLesson: setLastLesson,
+    getProgress: getProgress,
+    enrollmentCount: enrollmentCount,
+    getStudents: getStudents,
+    isFavourite: isFavourite,
+    toggleFavourite: toggleFavourite,
   };
 
   return <TheDataCont.Provider value={value}>{children}</TheDataCont.Provider>;
-};
+}

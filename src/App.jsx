@@ -20,31 +20,59 @@ import Register from "./pages/Home/components/Register";
 export default function App() {
   const { user } = useApp();
   const location = useLocation();
-  const [menuOpen, setMenuOpen] = useState(false); 
+  const [menuOpen, setMenuOpen] = useState(false); // phone menu
 
-  const isAuthPage = location.pathname === "/login" || location.pathname === "/register";
+  // on login/register pages we hide the sidebar, header and footer
+  let isAuthPage = false;
+  if (location.pathname === "/login" || location.pathname === "/register") {
+    isAuthPage = true;
+  }
 
-  const only = (role, page) => {
-    if (!user) return <Navigate to="/login" state={{ from: location.pathname }} replace />;
-    return user.role === role ? page : <Navigate to="/" replace />;
-  };
+  // shows the page only to the right role
+  function only(role, page) {
+    if (user === null) {
+      return <Navigate to="/login" state={{ from: location.pathname }} replace />;
+    }
+    if (user.role === role) {
+      return page;
+    }
+    return <Navigate to="/" replace />;
+  }
+
+  // logged-in users can't see login/register again
+  let loginPage = <Login />;
+  let registerPage = <Register />;
+  if (user !== null) {
+    loginPage = <Navigate to="/" replace />;
+    registerPage = <Navigate to="/" replace />;
+  }
+
+  let sidebarArea = null;
+  if (!isAuthPage) {
+    sidebarArea = (
+      <>
+        <Sidebar open={menuOpen} onClose={() => setMenuOpen(false)} />
+
+        {menuOpen && (
+          <div className="fixed inset-0 z-30 bg-black/40 md:hidden" onClick={() => setMenuOpen(false)} />
+        )}
+      </>
+    );
+  }
+
+  let mainClass = "flex-1 overflow-y-auto p-4 md:p-6";
+  if (isAuthPage) {
+    mainClass = "flex-1 overflow-y-auto";
+  }
 
   return (
     <div className="flex h-screen bg-gray-50 font-sans text-slate-800">
-      {!isAuthPage && (
-        <>
-          <Sidebar open={menuOpen} onClose={() => setMenuOpen(false)} />
-
-          {menuOpen && (
-            <div className="fixed inset-0 z-30 bg-black/40 md:hidden" onClick={() => setMenuOpen(false)} />
-          )}
-        </>
-      )}
+      {sidebarArea}
 
       <div className="flex min-w-0 flex-1 flex-col">
         {!isAuthPage && <Header onMenuClick={() => setMenuOpen(true)} />}
 
-        <main className={`flex-1 overflow-y-auto ${isAuthPage ? "" : "p-4 md:p-6"}`}>
+        <main className={mainClass}>
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/courses" element={<Catalog />} />
@@ -58,8 +86,8 @@ export default function App() {
             <Route path="/instructor/courses/new" element={only("instructor", <CourseEditor />)} />
             <Route path="/instructor/courses/:id" element={only("instructor", <CourseEditor />)} />
 
-            <Route path="/login" element={!user ? <Login /> : <Navigate to="/" replace />} />
-            <Route path="/register" element={!user ? <Register /> : <Navigate to="/" replace />} />
+            <Route path="/login" element={loginPage} />
+            <Route path="/register" element={registerPage} />
 
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
