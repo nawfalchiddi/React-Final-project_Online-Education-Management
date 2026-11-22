@@ -6,32 +6,45 @@ import { useApp } from "../../../utils/Mycontext";
 export default function Register() {
   const { signup } = useApp();
   const navigate = useNavigate();
-  const [form, setForm] = useState({ name: "", email: "", password: "", role: "student" });
+
+  // one state for each field
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [role, setRole] = useState("student");
   const [errors, setErrors] = useState({});
 
-  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
-
-  const validate = () => {
-    const err = {};
-    if (form.name.trim().length < 3) err.name = "Enter your full name (3 characters minimum).";
-    if (!/^\S+@\S+\.\S+$/.test(form.email)) err.email = "Enter a valid email address.";
-    if (form.password.length < 6) err.password = "Password must have at least 6 characters.";
-    return err;
-  };
-
-  const handleSubmit = (e) => {
+  function handleSubmit(e) {
     e.preventDefault();
-    const err = validate();
-    setErrors(err);
-    if (Object.keys(err).length) return;
 
-    const res = signup(form);
-    if (!res.ok) {
-      setErrors({ email: res.error });
+    // check the fields
+    const newErrors = {};
+    if (name.trim().length < 3) {
+      newErrors.name = "Enter your full name (3 characters minimum).";
+    }
+    if (!email.includes("@") || !email.includes(".")) {
+      newErrors.email = "Enter a valid email address.";
+    }
+    if (password.length < 6) {
+      newErrors.password = "Password must have at least 6 characters.";
+    }
+
+    setErrors(newErrors);
+
+    // if there is at least one error: stop
+    if (Object.keys(newErrors).length > 0) {
       return;
     }
+
+    // create the account
+    const result = signup({ name: name, email: email, password: password, role: role });
+    if (result.ok === false) {
+      setErrors({ email: result.error });
+      return;
+    }
+
     navigate("/login", { state: { registered: true } });
-  };
+  }
 
   const input = "mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:border-blue-500";
 
@@ -43,21 +56,27 @@ export default function Register() {
         </h1>
         <h2 className="text-lg font-semibold">Create your account</h2>
 
-        {[
-          ["name", "Full name", "text"],
-          ["email", "Email", "email"],
-          ["password", "Password", "password"],
-        ].map(([name, label, type]) => (
-          <label key={name} className="block text-sm font-medium">
-            {label}
-            <input name={name} type={type} value={form[name]} onChange={handleChange} className={input} />
-            {errors[name] && <span className="text-xs text-red-600">{errors[name]}</span>}
-          </label>
-        ))}
+        <label className="block text-sm font-medium">
+          Full name
+          <input type="text" value={name} onChange={(e) => setName(e.target.value)} className={input} />
+          {errors.name && <span className="text-xs text-red-600">{errors.name}</span>}
+        </label>
+
+        <label className="block text-sm font-medium">
+          Email
+          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className={input} />
+          {errors.email && <span className="text-xs text-red-600">{errors.email}</span>}
+        </label>
+
+        <label className="block text-sm font-medium">
+          Password
+          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className={input} />
+          {errors.password && <span className="text-xs text-red-600">{errors.password}</span>}
+        </label>
 
         <label className="block text-sm font-medium">
           I am a
-          <select name="role" value={form.role} onChange={handleChange} className={input}>
+          <select value={role} onChange={(e) => setRole(e.target.value)} className={input}>
             <option value="student">Student</option>
             <option value="instructor">Instructor</option>
           </select>
