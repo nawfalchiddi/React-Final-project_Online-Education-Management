@@ -22,14 +22,16 @@ export default function InstructorDashboard() {
     totalLessons = totalLessons + mine[i].lessons.length;
   }
 
-  // popular courses: most students first, keep 5
+  //and the  popular courses
+  //  most students first keep 5
   const sorted = mine.slice();
   sorted.sort(function (a, b) {
     return enrollmentCount(b.id) - enrollmentCount(a.id);
   });
   const popular = sorted.slice(0, 5);
 
-  // biggest number of students (to draw the bars)
+  // biggest number of students 
+  // to draw the bars
   let max = 1;
   for (let i = 0; i < popular.length; i++) {
     if (enrollmentCount(popular[i].id) > max) {
@@ -43,7 +45,7 @@ export default function InstructorDashboard() {
     }
   }
 
-  // ----- popular courses bars -----
+  // the popular courses 
   let popularBox;
   if (popular.length === 0) {
     popularBox = <p className="text-gray-500">No course yet.</p>;
@@ -68,7 +70,7 @@ export default function InstructorDashboard() {
     popularBox = <div className="space-y-3">{bars}</div>;
   }
 
-  // ----- my courses list -----
+  // courses list
   let myCoursesBox;
   if (mine.length === 0) {
     myCoursesBox = <p className="text-gray-500">You have no course yet. Click "New course" to create one.</p>;
@@ -96,7 +98,7 @@ export default function InstructorDashboard() {
     myCoursesBox = <ul className="divide-y">{items}</ul>;
   }
 
-  // ----- students and their progress -----
+  // evry students and their progress 
   const studentBlocks = [];
   for (let i = 0; i < mine.length; i++) {
     const c = mine[i];

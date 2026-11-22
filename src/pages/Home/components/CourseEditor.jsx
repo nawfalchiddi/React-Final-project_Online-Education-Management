@@ -36,12 +36,10 @@ export default function CourseEditor() {
   return <EditorForm key={formKey} course={course} />;
 }
 
-// Step 2: the forms (course is null when we create a new course)
 function EditorForm({ course }) {
   const navigate = useNavigate();
   const { addCourse, updateCourse, addLesson, updateLesson, deleteLesson, moveLesson, getStudents } = useApp();
 
-  // first values of the course form
   let startTitle = "";
   let startCategory = categories[0];
   let startLevel = levels[0];
@@ -55,7 +53,6 @@ function EditorForm({ course }) {
     startDescription = course.description;
   }
 
-  // course form
   const [title, setTitle] = useState(startTitle);
   const [category, setCategory] = useState(startCategory);
   const [level, setLevel] = useState(startLevel);
@@ -63,7 +60,6 @@ function EditorForm({ course }) {
   const [description, setDescription] = useState(startDescription);
   const [saved, setSaved] = useState(false);
 
-  // lesson form
   const [lTitle, setLTitle] = useState("");
   const [lDuration, setLDuration] = useState("");
   const [lContent, setLContent] = useState("");
@@ -79,7 +75,7 @@ function EditorForm({ course }) {
       setSaved(true);
     } else {
       const newId = addCourse(data);
-      navigate("/instructor/courses/" + newId, { replace: true }); // now we can add lessons
+      navigate("/instructor/courses/" + newId, { replace: true }); 
     }
   }
 
@@ -103,7 +99,7 @@ function EditorForm({ course }) {
     clearLessonForm();
   }
 
-  // put a lesson in the form to edit it
+
   function startEdit(lesson) {
     setEditingId(lesson.id);
     setLTitle(lesson.title);
@@ -119,10 +115,9 @@ function EditorForm({ course }) {
     }
   }
 
-  // The part under the course form: only when the course exists
   let extraSections = null;
   if (course !== null) {
-    // list of lessons
+  
     const lessonRows = [];
     for (let i = 0; i < course.lessons.length; i++) {
       const l = course.lessons[i];
@@ -153,7 +148,6 @@ function EditorForm({ course }) {
       );
     }
 
-    // list of students
     const students = getStudents(course.id);
     const studentRows = [];
     for (let i = 0; i < students.length; i++) {

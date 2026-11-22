@@ -9,7 +9,8 @@ export default function LessonPage() {
   const navigate = useNavigate();
   const { courses, user, isEnrolled, enroll, getEnrollment, toggleLesson, setLastLesson, getProgress } = useApp();
 
-  // find the course and the lesson
+  // find the course
+  //  and the lesson
   let course = null;
   for (let i = 0; i < courses.length; i++) {
     if (courses[i].id === id) {
@@ -35,7 +36,7 @@ export default function LessonPage() {
     isOwner = true;
   }
 
-  // can the user see this lesson?
+  // can the user see this lesson
   let canView = false;
   if (lesson !== null) {
     if (enrolled || lesson.free || isOwner) {
@@ -43,12 +44,13 @@ export default function LessonPage() {
     }
   }
 
-  // remember the last opened lesson ("continue where you left off")
+  // remember the last opened lesson 
+  // continue where you last step on a course
   useEffect(() => {
     if (enrolled && lesson !== null) {
       setLastLesson(id, lessonId);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    
   }, [enrolled, id, lessonId]);
 
   if (course === null || lesson === null) {
@@ -60,7 +62,8 @@ export default function LessonPage() {
     );
   }
 
-  // previous and next lessons
+  // previous 
+  // and next lessons
   let prev = null;
   if (index > 0) {
     prev = course.lessons[index - 1];
@@ -78,7 +81,8 @@ export default function LessonPage() {
 
   const progress = getProgress(course);
 
-  // can this person enroll? (visitors and students)
+  // can this person enroll 
+  // visitors and students
   let canEnroll = false;
   if (user === null || user.role === "student") {
     canEnroll = true;
@@ -92,7 +96,8 @@ export default function LessonPage() {
     }
   }
 
-  // button "Mark as completed"
+  // button 
+  // mmark as completed
   let doneClass = "flex items-center gap-2 rounded-lg px-4 py-2 font-semibold bg-blue-600 text-white";
   let doneText = "Mark as completed";
   if (isDone) {
@@ -100,7 +105,9 @@ export default function LessonPage() {
     doneText = "Completed (click to undo)";
   }
 
-  // the middle part: locked box, or the lesson
+  // the middle part 
+  //  locked box
+  //  or the lesson
   let middle;
   if (!canView) {
     middle = (
@@ -138,7 +145,8 @@ export default function LessonPage() {
     );
   }
 
-  // previous / next buttons
+  // previous or
+  //  next buttons
   let prevButton = <span />;
   if (prev !== null) {
     prevButton = (

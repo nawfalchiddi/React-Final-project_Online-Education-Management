@@ -10,7 +10,9 @@ function CourseRow({ course }) {
   const progress = getProgress(course);
   const enrollment = getEnrollment(course.id);
 
-  // which lesson to open: the last opened one, else the first not completed, else the first
+  // which cpourse to open
+  // the last opened one
+  // else the first not completed, else the first
   let lessonId = null;
   if (enrollment !== null) {
     for (let i = 0; i < course.lessons.length; i++) {
@@ -94,7 +96,8 @@ export default function Dashboard() {
     }
   }
 
-  // makes the rows of a list of courses
+  // makes the rows 
+  // of a list of courses
   function makeRows(list) {
     const rows = [];
     for (let i = 0; i < list.length; i++) {

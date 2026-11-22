@@ -26,7 +26,7 @@ export default function CourseDetails() {
     );
   }
 
-  // who is looking?
+  // who is looking
   let isStudent = false;
   let isInstructor = false;
   let isOwner = false;
@@ -46,7 +46,7 @@ export default function CourseDetails() {
     completed = enrollment.completed;
   }
 
-  // "Continue where you left off": the last opened lesson, else the first lesson not completed
+  // continue wherewas the las course
   let continueId = null;
   if (enrollment !== null && enrollment.lastLessonId !== null) {
     for (let i = 0; i < course.lessons.length; i++) {
@@ -89,13 +89,11 @@ export default function CourseDetails() {
     }
   }
 
-  // text of the learning button
   let learnText = "Start learning";
   if (progress.done > 0) {
     learnText = "Continue learning";
   }
 
-  // show the Enroll button?
   let showEnroll = false;
   if (!enrolled && (user === null || isStudent)) {
     showEnroll = true;
@@ -108,13 +106,11 @@ export default function CourseDetails() {
     heartText = "Saved";
   }
 
-  // build the list of lessons
   const lessonRows = [];
   for (let i = 0; i < course.lessons.length; i++) {
     const lesson = course.lessons[i];
     const isDone = completed.includes(lesson.id);
 
-    // locked if not enrolled (the free preview lesson is open for everyone)
     let open = false;
     if (enrolled || lesson.free || isOwner) {
       open = true;

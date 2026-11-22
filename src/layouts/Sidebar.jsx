@@ -16,7 +16,8 @@ const visitorLinks = [home, catalog];
 const studentLinks = [home, catalog, dashboard, favouritesLink];
 const instructorLinks = [home, catalog, instructorLink];
 
-// NavLink gives us info.isActive = "is this the current page?"
+// navLink gives us info.isActive = 
+// is this the current page
 function getLinkClass(info) {
   let cls = "flex items-center justify-between rounded-lg p-3 transition hover:bg-yellow-500 hover:text-gray-500";
   if (info.isActive) {
@@ -28,7 +29,7 @@ function getLinkClass(info) {
 export default function Sidebar({ open, onClose }) {
   const { user, favourites, logout } = useApp();
 
-  // which links to show?
+  // which links 
   let links = visitorLinks;
   if (user !== null && user.role === "student") {
     links = studentLinks;
@@ -42,7 +43,7 @@ export default function Sidebar({ open, onClose }) {
     onClose();
   }
 
-  // on phones: the menu is hidden on the left, or shown
+  //  phones is hidden 
   let slideClass = "-translate-x-full";
   if (open) {
     slideClass = "translate-x-0";

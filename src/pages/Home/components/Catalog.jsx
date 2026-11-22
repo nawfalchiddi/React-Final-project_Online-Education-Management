@@ -25,7 +25,6 @@ export default function Catalog() {
     setParams(next);
   }
 
-  // keep only the courses that match all the filters
   const filtered = [];
   for (let i = 0; i < courses.length; i++) {
     const c = courses[i];
