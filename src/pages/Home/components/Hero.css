@@ -1,0 +1,64 @@
+.text{
+    color: grey;
+    font-size: smaller;
+    font-style: italic;
+}
+.imgswim{
+    width: 45%;
+    border-radius: 10px;
+}
+.imgswim3{
+    height: 18vh;
+  width: 45%;
+    border-radius: 10px;
+}
+
+.divimages{
+    margin-top: 4%;
+    display: flex;
+    gap: 2%;
+    justify-content: center;
+    width: 55%;
+    height: 27vh;
+}
+.textdivHero{
+    padding-right: 1%;
+    width: 36%;
+}
+.heroSection{
+    color: aliceblue;
+    margin-top:3% ;
+    border-radius: 10px;
+    padding-bottom: 3%;
+    padding-top: 3%;
+    background-color: rgb(21, 17, 12);
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.theupper{
+    display: flex;
+    flex-direction: column;
+}
+.div1{
+    width: 100%;
+}
+.divskills{
+    border: 1px solid rebeccapurple;
+    border-radius: 10px;
+    background-color: rgb(51, 11, 89);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+
+}
+.belowpart{
+    justify-content: space-around;
+    display: flex;
+    margin-top: 4%;
+    background-color: rgb(120, 65, 133);
+    border-radius: 10px;
+    height: 40vh;
+}
