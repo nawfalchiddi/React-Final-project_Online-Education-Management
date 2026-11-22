@@ -8,9 +8,16 @@ export default function CourseDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { courses, user, enroll, unenroll, isEnrolled, getEnrollment, getProgress, isFavourite, toggleFavourite } = useApp();
-  const course = courses.find((c) => c.id === id);
 
-  if (!course) {
+  // find the course
+  let course = null;
+  for (let i = 0; i < courses.length; i++) {
+    if (courses[i].id === id) {
+      course = courses[i];
+    }
+  }
+
+  if (course === null) {
     return (
       <div className="py-20 text-center">
         <p>Course not found.</p>
@@ -19,27 +26,141 @@ export default function CourseDetails() {
     );
   }
 
-  const isStudent = user?.role === "student";
-  const isOwner = user?.email === course.ownerEmail;
+  // who is looking?
+  let isStudent = false;
+  let isInstructor = false;
+  let isOwner = false;
+  if (user !== null) {
+    if (user.role === "student") isStudent = true;
+    if (user.role === "instructor") isInstructor = true;
+    if (user.email === course.ownerEmail) isOwner = true;
+  }
+
   const enrolled = isEnrolled(course.id);
   const enrollment = getEnrollment(course.id);
-  const completed = enrollment?.completed || [];
-  const { done, total, percent } = getProgress(course);
+  const progress = getProgress(course);
   const fav = isFavourite(course.id);
 
-  const lastOk = course.lessons.some((l) => l.id === enrollment?.lastLessonId);
-  const continueId = lastOk
-    ? enrollment.lastLessonId
-    : (course.lessons.find((l) => !completed.includes(l.id)) || course.lessons[0])?.id;
+  let completed = [];
+  if (enrollment !== null) {
+    completed = enrollment.completed;
+  }
 
-  const handleEnroll = () => {
-    if (!user) navigate("/login", { state: { from: `/courses/${course.id}` } })
-    else enroll(course.id);
-  };
+  // "Continue where you left off": the last opened lesson, else the first lesson not completed
+  let continueId = null;
+  if (enrollment !== null && enrollment.lastLessonId !== null) {
+    for (let i = 0; i < course.lessons.length; i++) {
+      if (course.lessons[i].id === enrollment.lastLessonId) {
+        continueId = course.lessons[i].id;
+      }
+    }
+  }
+  if (continueId === null) {
+    for (let i = 0; i < course.lessons.length; i++) {
+      if (!completed.includes(course.lessons[i].id)) {
+        continueId = course.lessons[i].id;
+        break;
+      }
+    }
+  }
+  if (continueId === null && course.lessons.length > 0) {
+    continueId = course.lessons[0].id;
+  }
 
-  const handleUnenroll = () => {
-    if (window.confirm("Unenroll from this course? Your progress will be lost.")) unenroll(course.id);
-  };
+  function handleEnroll() {
+    if (user === null) {
+      navigate("/login", { state: { from: "/courses/" + course.id } }); // visitors log in first
+    } else {
+      enroll(course.id);
+    }
+  }
+
+  function handleUnenroll() {
+    if (window.confirm("Unenroll from this course? Your progress will be lost.")) {
+      unenroll(course.id);
+    }
+  }
+
+  function handleSave() {
+    if (user === null) {
+      navigate("/login", { state: { from: "/courses/" + course.id } });
+    } else {
+      toggleFavourite(course.id);
+    }
+  }
+
+  // text of the learning button
+  let learnText = "Start learning";
+  if (progress.done > 0) {
+    learnText = "Continue learning";
+  }
+
+  // show the Enroll button?
+  let showEnroll = false;
+  if (!enrolled && (user === null || isStudent)) {
+    showEnroll = true;
+  }
+
+  let heartIcon = <FaRegHeart />;
+  let heartText = "Save for later";
+  if (fav) {
+    heartIcon = <FaHeart className="text-red-500" />;
+    heartText = "Saved";
+  }
+
+  // build the list of lessons
+  const lessonRows = [];
+  for (let i = 0; i < course.lessons.length; i++) {
+    const lesson = course.lessons[i];
+    const isDone = completed.includes(lesson.id);
+
+    // locked if not enrolled (the free preview lesson is open for everyone)
+    let open = false;
+    if (enrolled || lesson.free || isOwner) {
+      open = true;
+    }
+
+    let titleClass = "font-medium";
+    if (isDone) {
+      titleClass = "font-medium text-gray-400 line-through";
+    }
+
+    let previewBadge = null;
+    if (lesson.free && !enrolled) {
+      previewBadge = <span className="ml-2 rounded bg-green-100 px-1.5 py-0.5 text-green-700">Free preview</span>;
+    }
+
+    let rightSide;
+    if (open) {
+      let buttonText = "Open";
+      if (lesson.free && !enrolled) {
+        buttonText = "Preview";
+      }
+      rightSide = (
+        <span className="flex items-center gap-3">
+          {isDone && <FiCheckCircle className="text-green-600" />}
+          <Link to={"/courses/" + course.id + "/lessons/" + lesson.id} className="rounded-lg border border-blue-600 px-3 py-1 text-sm font-semibold text-blue-600">
+            {buttonText}
+          </Link>
+        </span>
+      );
+    } else {
+      rightSide = <FiLock className="text-gray-400" title="Enroll to unlock" />;
+    }
+
+    lessonRows.push(
+      <li key={lesson.id} className="flex items-center justify-between gap-3 border-b p-4 last:border-b-0">
+        <div>
+          <p className={titleClass}>{i + 1}. {lesson.title}</p>
+          <p className="text-xs text-gray-500">
+            {lesson.duration}
+            {previewBadge}
+          </p>
+        </div>
+        {rightSide}
+      </li>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
@@ -56,72 +177,43 @@ export default function CourseDetails() {
       <p className="text-gray-600">{course.description}</p>
 
       <div className="flex flex-wrap items-center gap-3">
-        {enrolled && continueId && (
-          <Link to={`/courses/${course.id}/lessons/${continueId}`} className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white hover:bg-blue-700">
-            <FiPlayCircle /> {done > 0 ? "Continue learning" : "Start learning"}
+        {enrolled && continueId !== null && (
+          <Link to={"/courses/" + course.id + "/lessons/" + continueId} className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white hover:bg-blue-700">
+            <FiPlayCircle /> {learnText}
           </Link>
         )}
         {enrolled && (
           <button onClick={handleUnenroll} className="rounded-lg border px-4 py-2 text-sm">Unenroll</button>
         )}
-        {!enrolled && (!user || isStudent) && (
+        {showEnroll && (
           <button onClick={handleEnroll} className="rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white hover:bg-blue-700">
             Enroll in this course
           </button>
         )}
         {isOwner && (
-          <Link to={`/instructor/courses/${course.id}`} className="flex items-center gap-2 rounded-lg border px-4 py-2">
+          <Link to={"/instructor/courses/" + course.id} className="flex items-center gap-2 rounded-lg border px-4 py-2">
             <FiEdit2 /> Edit course
           </Link>
         )}
-        {user?.role !== "instructor" && (
-          <button
-            onClick={() => (user ? toggleFavourite(course.id) : navigate("/login", { state: { from: `/courses/${course.id}` } }))}
-            className="flex items-center gap-2 rounded-lg border px-4 py-2"
-          >
-            {fav ? <FaHeart className="text-red-500" /> : <FaRegHeart />}
-            {fav ? "Saved" : "Save for later"}
+        {!isInstructor && (
+          <button onClick={handleSave} className="flex items-center gap-2 rounded-lg border px-4 py-2">
+            {heartIcon}
+            {heartText}
           </button>
         )}
       </div>
 
       {enrolled && (
         <div className="rounded-xl border bg-white p-4">
-          <p className="mb-2 text-sm font-semibold">{done} of {total} lessons completed ({percent}%)</p>
-          <ProgressBar percent={percent} />
+          <p className="mb-2 text-sm font-semibold">{progress.done} of {progress.total} lessons completed ({progress.percent}%)</p>
+          <ProgressBar percent={progress.percent} />
         </div>
       )}
 
       <div className="rounded-xl border bg-white">
-        <h3 className="border-b p-4 font-bold">Lessons ({total})</h3>
-        {total === 0 && <p className="p-4 text-sm text-gray-500">No lessons yet.</p>}
-        <ul>
-          {course.lessons.map((lesson, i) => {
-            const open = enrolled || lesson.free || isOwner; // locked if not enrolled (first lesson = free preview)
-            const isDone = completed.includes(lesson.id);
-            return (
-              <li key={lesson.id} className="flex items-center justify-between gap-3 border-b p-4 last:border-b-0">
-                <div>
-                  <p className={`font-medium ${isDone ? "text-gray-400 line-through" : ""}`}>{i + 1}. {lesson.title}</p>
-                  <p className="text-xs text-gray-500">
-                    {lesson.duration}
-                    {lesson.free && !enrolled && <span className="ml-2 rounded bg-green-100 px-1.5 py-0.5 text-green-700">Free preview</span>}
-                  </p>
-                </div>
-                {open ? (
-                  <span className="flex items-center gap-3">
-                    {isDone && <FiCheckCircle className="text-green-600" />}
-                    <Link to={`/courses/${course.id}/lessons/${lesson.id}`} className="rounded-lg border border-blue-600 px-3 py-1 text-sm font-semibold text-blue-600">
-                      {lesson.free && !enrolled ? "Preview" : "Open"}
-                    </Link>
-                  </span>
-                ) : (
-                  <FiLock className="text-gray-400" title="Enroll to unlock" />
-                )}
-              </li>
-            );
-          })}
-        </ul>
+        <h3 className="border-b p-4 font-bold">Lessons ({progress.total})</h3>
+        {progress.total === 0 && <p className="p-4 text-sm text-gray-500">No lessons yet.</p>}
+        <ul>{lessonRows}</ul>
       </div>
     </div>
   );
