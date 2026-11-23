@@ -12,7 +12,8 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
-  // location.state = the hidden note we sent with navigate(...)
+  // location.state 
+  //  the hidden note we sent using navigate
   let from = null;
   let justRegistered = false;
   if (location.state !== null) {
@@ -29,7 +30,8 @@ export default function Login() {
       return;
     }
 
-    // go back to the page the visitor wanted, else to the right dashboard
+    // go back to the page the visitor wanted
+    //  else to the right dashboard
     let goTo;
     if (from !== null) {
       goTo = from;

@@ -19,10 +19,15 @@ import Register from "./pages/Home/components/Register";
 
 export default function App() {
   const { user } = useApp();
-  const location = useLocation();
-  const [menuOpen, setMenuOpen] = useState(false); // phone menu
+  const location = useLocation()
 
-  // on login/register pages we hide the sidebar, header and footer
+
+
+  // phone mediaquery
+  const [menuOpen, setMenuOpen] = useState(false); 
+
+  // on login or register pages 
+  // we hide the sidebar header and footer 
   let isAuthPage = false;
   if (location.pathname === "/login" || location.pathname === "/register") {
     isAuthPage = true;
@@ -39,7 +44,8 @@ export default function App() {
     return <Navigate to="/" replace />;
   }
 
-  // logged-in users can't see login/register again
+  // hide  login register 
+  // if user is looged in
   let loginPage = <Login />;
   let registerPage = <Register />;
   if (user !== null) {

@@ -7,7 +7,7 @@ export default function Register() {
   const { signup } = useApp();
   const navigate = useNavigate();
 
-  // one state for each field
+
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -17,7 +17,7 @@ export default function Register() {
   function handleSubmit(e) {
     e.preventDefault();
 
-    // check the fields
+    
     const newErrors = {};
     if (name.trim().length < 3) {
       newErrors.name = "Enter your full name (3 characters minimum).";
@@ -31,12 +31,14 @@ export default function Register() {
 
     setErrors(newErrors);
 
-    // if there is at least one error: stop
+    // if there is 
+    // one error stop
     if (Object.keys(newErrors).length > 0) {
       return;
     }
 
-    // create the account
+    // create
+    //  account
     const result = signup({ name: name, email: email, password: password, role: role });
     if (result.ok === false) {
       setErrors({ email: result.error });
